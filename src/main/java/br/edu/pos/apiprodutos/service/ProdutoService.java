@@ -15,11 +15,22 @@ public class ProdutoService {
         this.repository = repository;
     }
 
-    public Produto cadastrar(String nome, double preco) {
+    public Produto cadastrar(String nome, double preco, int quantidadeEstoque) {
 
         validarProduto(nome, preco);
 
-        Produto produto = new Produto(null, nome, preco);
+        if (quantidadeEstoque < 0) {
+            throw new IllegalArgumentException(
+                    "A quantidade em estoque não pode ser negativa."
+            );
+        }
+
+        Produto produto = new Produto(
+                null,
+                nome,
+                preco,
+                quantidadeEstoque
+        );
 
         repository.salvar(produto);
 
@@ -40,14 +51,24 @@ public class ProdutoService {
                 );
     }
 
-    public Produto atualizar(Long id, String nome, double preco) {
+    public Produto atualizar(Long id, String nome, double preco, int quantidadeEstoque) {
 
         validarProduto(nome, preco);
+
+
 
         Produto produto = buscarPorId(id);
 
         produto.setNome(nome);
         produto.setPreco(preco);
+
+        if (quantidadeEstoque < 0) {
+            throw new IllegalArgumentException(
+                    "A quantidade em estoque não pode ser negativa."
+            );
+        }
+
+        produto.setQuantidadeEstoque(quantidadeEstoque);
 
         repository.salvar(produto);
 
@@ -74,5 +95,55 @@ public class ProdutoService {
                     "O preço deve ser maior que zero."
             );
         }
+    }
+    public Produto entradaEstoque(Long id, int quantidade) {
+
+        if (quantidade <= 0) {
+            throw new IllegalArgumentException(
+                    "A quantidade deve ser maior que zero."
+            );
+        }
+
+        Produto produto = buscarPorId(id);
+
+        produto.setQuantidadeEstoque(
+                produto.getQuantidadeEstoque() + quantidade
+        );
+
+        repository.salvar(produto);
+
+        return produto;
+    }
+    public Produto saidaEstoque(Long id, int quantidade) {
+
+        if (quantidade <= 0) {
+            throw new IllegalArgumentException(
+                    "A quantidade deve ser maior que zero."
+            );
+        }
+
+        Produto produto = buscarPorId(id);
+
+        if (quantidade > produto.getQuantidadeEstoque()) {
+            throw new IllegalArgumentException(
+                    "Estoque insuficiente."
+            );
+        }
+
+        produto.setQuantidadeEstoque(
+                produto.getQuantidadeEstoque() - quantidade
+        );
+
+        repository.salvar(produto);
+
+        return produto;
+    }
+    public List<Produto> listarEstoqueBaixo(int limite) {
+
+        return repository.listarTodos()
+                .stream()
+                .filter(produto ->
+                        produto.getQuantidadeEstoque() <= limite)
+                .toList();
     }
 }

@@ -1,6 +1,7 @@
 
 package br.edu.pos.apiprodutos.controller;
 
+import br.edu.pos.apiprodutos.controller.MovimentacaoEstoque;
 import br.edu.pos.apiprodutos.model.Produto;
 import br.edu.pos.apiprodutos.service.ProdutoService;
 
@@ -29,9 +30,15 @@ public class ProdutoController {
 
         app.get("/produtos", this::listarProdutos);
 
+        app.get("/produtos/estoque-baixo", this::listarEstoqueBaixo);
+
         app.get("/produtos/{id}", this::buscarProduto);
 
         app.post("/produtos", this::cadastrarProduto);
+
+        app.post("/produtos/{id}/estoque/entrada",this::entradaEstoque);
+
+        app.post("/produtos/{id}/estoque/saida",this::saidaEstoque);
 
         app.put("/produtos/{id}", this::atualizarProduto);
 
@@ -127,7 +134,8 @@ public class ProdutoController {
 
         Produto produto = service.cadastrar(
                 dados.getNome(),
-                dados.getPreco()
+                dados.getPreco(),
+                dados.getQuantidadeEstoque()
         );
 
         ctx.status(HttpStatus.CREATED);
@@ -173,7 +181,8 @@ public class ProdutoController {
         Produto atualizado = service.atualizar(
                 id,
                 dados.getNome(),
-                dados.getPreco()
+                dados.getPreco(),
+                dados.getQuantidadeEstoque()
         );
 
         ctx.json(atualizado);
@@ -206,8 +215,125 @@ public class ProdutoController {
 
         ctx.status(HttpStatus.NO_CONTENT);
     }
+    @OpenApi(
+            path = "/produtos/{id}/estoque/entrada",
+            methods = {HttpMethod.POST},
+            summary = "Registrar entrada de estoque",
+            tags = {"Produtos"},
+            pathParams = {
+                    @OpenApiParam(
+                            name = "id",
+                            type = Long.class,
+                            description = "Identificador do produto",
+                            required = true
+                    )
+            },
+            requestBody = @OpenApiRequestBody(
+                    content = {
+                            @OpenApiContent(from = MovimentacaoEstoque.class)
+                    }
+            ),
+            responses = {
+                    @OpenApiResponse(
+                            status = "200",
+                            content = {
+                                    @OpenApiContent(from = Produto.class)
+                            }
+                    ),
+                    @OpenApiResponse(status = "400"),
+                    @OpenApiResponse(status = "404")
+            }
+    )
+    public void entradaEstoque(Context ctx) {
 
-    
+        Long id = Long.parseLong(ctx.pathParam("id"));
+
+        MovimentacaoEstoque dados =
+                ctx.bodyAsClass(MovimentacaoEstoque.class);
+
+        Produto produto =
+                service.entradaEstoque(
+                        id,
+                        dados.getQuantidade()
+                );
+
+        ctx.json(produto);
+    }
+    @OpenApi(
+            path = "/produtos/{id}/estoque/saida",
+            methods = {HttpMethod.POST},
+            summary = "Registrar saída de estoque",
+            tags = {"Produtos"},
+            pathParams = {
+                    @OpenApiParam(
+                            name = "id",
+                            type = Long.class,
+                            description = "Identificador do produto",
+                            required = true
+                    )
+            },
+            requestBody = @OpenApiRequestBody(
+                    content = {
+                            @OpenApiContent(from = MovimentacaoEstoque.class)
+                    }
+            ),
+            responses = {
+                    @OpenApiResponse(
+                            status = "200",
+                            content = {
+                                    @OpenApiContent(from = Produto.class)
+                            }
+                    ),
+                    @OpenApiResponse(status = "400"),
+                    @OpenApiResponse(status = "404")
+            }
+    )
+    @OpenApi(
+            path = "/produtos/estoque-baixo",
+            methods = {HttpMethod.GET},
+            summary = "Listar produtos com estoque baixo",
+            tags = {"Produtos"},
+            responses = {
+                    @OpenApiResponse(
+                            status = "200",
+                            content = {
+                                    @OpenApiContent(from = Produto[].class)
+                            }
+                    )
+            }
+    )
+    public void saidaEstoque(Context ctx) {
+
+        Long id = Long.parseLong(ctx.pathParam("id"));
+
+        MovimentacaoEstoque dados =
+                ctx.bodyAsClass(MovimentacaoEstoque.class);
+
+        Produto produto =
+                service.saidaEstoque(
+                        id,
+                        dados.getQuantidade()
+                );
+
+        ctx.json(produto);
+    }
+    public void listarEstoqueBaixo(Context ctx) {
+
+        int limite = 5;
+
+        if (ctx.queryParam("limite") != null) {
+            limite = Integer.parseInt(
+                    ctx.queryParam("limite")
+            );
+        }
+
+        ctx.json(
+                service.listarEstoqueBaixo(limite)
+        );
+    }
+
+
+
     public record MensagemErro(String mensagem) {
     }
 }

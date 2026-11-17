@@ -24,11 +24,11 @@ public class Main {
 
 
         Server h2Console = Server.createWebServer(
-                "-webPort", "8082"
+                "-webPort", "8083"
         ).start();
 
         System.out.println(
-                "Console H2: http://localhost:8082"
+                "Console H2: http://localhost:8083"
         );
 
 
