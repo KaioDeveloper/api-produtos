@@ -36,4 +36,11 @@ public class ProdutoRepositoryMemoria implements ProdutoRepository {
 
         produtos.removeIf(p -> p.getId().equals(id));
     }
+
+    public void atualizar(Produto produto) {
+
+        produtos.removeIf(p -> p.getId().equals(produto.getId()));
+
+        produtos.add(produto);
+    }
 }

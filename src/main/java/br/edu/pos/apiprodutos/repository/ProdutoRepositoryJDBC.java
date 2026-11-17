@@ -24,8 +24,8 @@ public class ProdutoRepositoryJDBC implements ProdutoRepository {
     private void inserir(Produto produto) {
 
         String sql = """
-                INSERT INTO produtos (nome, preco)
-                VALUES (?, ?)
+                INSERT INTO produtos (nome, preco, quantidade_estoque)
+                VALUES (?, ?, ?)
                 """;
 
         try (
@@ -38,6 +38,7 @@ public class ProdutoRepositoryJDBC implements ProdutoRepository {
 
             comando.setString(1, produto.getNome());
             comando.setDouble(2, produto.getPreco());
+            comando.setInt(3, produto.getQuantidadeEstoque());
 
             comando.executeUpdate();
 
@@ -60,13 +61,14 @@ public class ProdutoRepositoryJDBC implements ProdutoRepository {
         }
     }
 
+
     private void atualizar(Produto produto) {
 
         String sql = """
-                UPDATE produtos
-                SET nome = ?, preco = ?
-                WHERE id = ?
-                """;
+            UPDATE produtos
+            SET nome = ?, preco = ?, quantidade_estoque = ?
+            WHERE id = ?
+            """;
 
         try (
                 Connection conexao = Database.conectar();
@@ -75,7 +77,8 @@ public class ProdutoRepositoryJDBC implements ProdutoRepository {
 
             comando.setString(1, produto.getNome());
             comando.setDouble(2, produto.getPreco());
-            comando.setLong(3, produto.getId());
+            comando.setInt(3, produto.getQuantidadeEstoque());
+            comando.setLong(4, produto.getId());
 
             comando.executeUpdate();
 
@@ -92,7 +95,7 @@ public class ProdutoRepositoryJDBC implements ProdutoRepository {
 
         List<Produto> produtos = new ArrayList<>();
 
-        String sql = "SELECT id, nome, preco FROM produtos ORDER BY id";
+        String sql = "SELECT id, nome, preco, quantidade_estoque FROM produtos ORDER BY id";
 
         try (
                 Connection conexao = Database.conectar();
@@ -118,7 +121,7 @@ public class ProdutoRepositoryJDBC implements ProdutoRepository {
     public Optional<Produto> buscarPorId(Long id) {
 
         String sql = """
-                SELECT id, nome, preco
+                SELECT id, nome, preco, quantidade_estoque
                 FROM produtos
                 WHERE id = ?
                 """;
@@ -174,7 +177,8 @@ public class ProdutoRepositoryJDBC implements ProdutoRepository {
         return new Produto(
                 resultado.getLong("id"),
                 resultado.getString("nome"),
-                resultado.getDouble("preco")
+                resultado.getDouble("preco"),
+                resultado.getInt("quantidade_estoque")
         );
     }
 }
